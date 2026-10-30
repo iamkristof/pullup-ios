@@ -1,0 +1,30 @@
+name: iOS build and tests
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Select an available iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, os
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '-j']))['devices']
+          phones = [d for runtime, rows in devices.items() if 'iOS' in runtime for d in rows if d['name'].startswith('iPhone')]
+          if not phones: raise SystemExit('No available iPhone simulator')
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('SIMULATOR_ID=' + phones[0]['udid'] + '\n')
+          PY
+      - name: Build and test without signing credentials
+        run: xcodebuild test -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults.xcresult
