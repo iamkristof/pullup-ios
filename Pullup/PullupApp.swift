@@ -4,14 +4,17 @@ import SwiftUI
     @Published var account: Account?
     @Published var restoring = true
     @Published var error: String?
+    private var generation = UUID()
     func restore() async {
+        let requestID = generation
         defer { restoring = false }
         guard API.shared.hasSession else { account = nil; return }
-        do { let result: AccountResponse = try await API.shared.request("/api/auth/me"); account = result.user; error = nil }
-        catch let failure as APIError where failure.status == 401 { API.shared.clear(); account = nil }
+        do { let result: AccountResponse = try await API.shared.request("/api/auth/me"); guard requestID == generation, API.shared.hasSession else { return }; account = result.user; error = nil }
+        catch let failure as APIError where failure.status == 401 { if requestID == generation { API.shared.clear(); account = nil } }
         catch { self.error = "Your account could not be loaded. Pull to refresh or try again." }
     }
     func signOut() async {
+        generation = UUID()
         do { _ = try await API.shared.data("/api/auth/logout", method: "POST") }
         catch { self.error = "Signed out on this device. If you are offline, revoke this session in web settings later." }
         API.shared.clear(); account = nil
