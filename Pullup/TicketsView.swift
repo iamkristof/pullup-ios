@@ -155,7 +155,7 @@ struct TicketDetailView: View {
     private func addPass() async {
         addingPass = true; error = nil; defer { addingPass = false }
         do {
-            let data = try await API.shared.data("/api/ticket/\(API.segment(reference))/apple-wallet")
+            let data = try await API.shared.data("/api/ticket/\(API.segment(reference))/apple-wallet/click", method: "POST", form: ["pass": "entry"])
             pass = PassPresentation(pass: try PKPass(data: data))
         } catch { self.error = error.localizedDescription }
     }

@@ -62,7 +62,7 @@ enum SessionKeychain {
         try SessionKeychain.save(JSONEncoder().encode(Credential(value: item.value, expires: expiry)))
         cookie = item.value; expires = expiry
     }
-    func data(_ path: String, method: String = "GET", body: [String: String]? = nil) async throws -> Data {
+    func data(_ path: String, method: String = "GET", body: [String: String]? = nil, form: [String: String]? = nil) async throws -> Data {
         guard path.hasPrefix("/"), !path.hasPrefix("//"), let url = URL(string: path, relativeTo: Self.origin)?.absoluteURL,
               url.scheme == "https", url.host == Self.origin.host else { throw APIError(status: 0, message: "Invalid Pullup link.") }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
@@ -74,6 +74,11 @@ enum SessionKeychain {
         if let body {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        if let form {
+            let fields = form.map { API.segment($0.key) + "=" + API.segment($0.value) }.joined(separator: "&")
+            request.httpBody = Data(fields.utf8)
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         }
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw APIError(status: 0, message: "No response. Please retry.") }
