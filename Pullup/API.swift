@@ -54,7 +54,7 @@ enum SessionKeychain {
     func clear() { cookie = nil; expires = nil; SessionKeychain.clear() }
     func webCookie() -> HTTPCookie? {
         guard hasSession, let cookie else { return nil }
-        return HTTPCookie(properties: [.name: "pullup_session", .value: cookie, .domain: ".pullup.at", .path: "/", .secure: "TRUE", .expires: expires!])
+        return HTTPCookie(properties: [.name: "pullup_session", .value: cookie, .domain: ".pullup.at", .path: "/", .secure: "TRUE", HTTPCookiePropertyKey("HttpOnly"): "TRUE", .expires: expires!])
     }
     func importCookie(_ item: HTTPCookie) throws {
         guard item.name == "pullup_session", ["pullup.at", ".pullup.at"].contains(item.domain), item.isSecure,
