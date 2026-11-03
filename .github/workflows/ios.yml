@@ -41,8 +41,10 @@ jobs:
           if not phones: raise SystemExit('No available iPhone simulator')
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('SIMULATOR_ID=' + phones[0]['udid'] + '\n')
           PY
-      - name: Build and test without signing credentials
-        run: xcodebuild test -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
+      - name: Build without signing credentials
+        run: xcodebuild build-for-testing -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath Build CODE_SIGNING_ALLOWED=NO
+      - name: Run unit and UI tests
+        run: xcodebuild test-without-building -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath Build -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
       - name: Export screenshots
         if: always()
         run: |
@@ -54,7 +56,7 @@ jobs:
         run: |
           python3 - <<'PYCODE'
           import json, pathlib
-          paths = ['Pullup.xcodeproj/project.pbxproj', 'Pullup.xcodeproj/xcshareddata/xcschemes/Pullup.xcscheme']
+          paths = ['Pullup.xcodeproj/project.pbxproj'] + [str(p) for p in pathlib.Path('Pullup.xcodeproj/xcshareddata/xcschemes').glob('*.xcscheme')]
           for path in paths:
               p = pathlib.Path(path)
               if p.exists():
@@ -74,3 +76,8 @@ jobs:
           path: Pullup.xcodeproj
 
 
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auth-screenshots
+          path: AuthScreenshots

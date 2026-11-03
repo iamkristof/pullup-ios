@@ -7,6 +7,13 @@ import SwiftUI
 #endif
         return AuthenticationModel(service: LiveAuthenticationService())
     }
+    static var quietUITests: Bool {
+#if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--disable-decorative-animation")
+#else
+        false
+#endif
+    }
     static var isUITesting: Bool {
 #if DEBUG
         ProcessInfo.processInfo.arguments.contains("--auth-ui-testing")

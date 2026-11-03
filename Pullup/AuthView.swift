@@ -61,7 +61,7 @@ import SwiftUI
         VStack(spacing: 20) {
             HStack {
                 if model.step != .welcome && model.step != .success {
-                    AuthRoundButton(symbol: "arrow.left", label: "Back") { focus = nil; model.back() }.disabled(model.busy)
+                    AuthRoundButton(symbol: "arrow.left", label: "Back") { focus = nil; model.back() }.disabled(!model.canGoBack)
                 } else { Color.clear.frame(width: 46, height: 46) }
                 Spacer()
                 Text("pullup↗").font(.title3.weight(.black)).accessibilityLabel("Pullup")
@@ -181,7 +181,7 @@ import SwiftUI
     }
     private var emailReview: some View {
         HStack(spacing: 12) {
-            Image(systemName: "envelope.badge.shield.half.filled").foregroundStyle(Palette.acid)
+            Image(systemName: "envelope.badge").foregroundStyle(Palette.acid)
             Text(model.normalizedEmail).font(.subheadline).lineLimit(2).textSelection(.enabled)
             Spacer(minLength: 0)
             Button { focus = nil; model.editEmail() } label: { Image(systemName: "pencil").frame(width: 36, height: 40) }
@@ -190,7 +190,7 @@ import SwiftUI
     }
     private var approvalCard: some View {
         VStack(spacing: 22) {
-            Image(systemName: "envelope.open.badge.clock").font(.system(size: 46, weight: .light)).foregroundStyle(Palette.acid).padding(.top, 10)
+            Image(systemName: "envelope.open").font(.system(size: 46, weight: .light)).foregroundStyle(Palette.acid).padding(.top, 10)
             Text(model.normalizedEmail).font(.headline).multilineTextAlignment(.center).textSelection(.enabled)
             Text("Approve this login from the email, then return here. We’ll keep your place.").font(.subheadline).foregroundStyle(.white.opacity(0.6)).multilineTextAlignment(.center)
             if model.hasAuthenticator { Button("Use my authenticator instead") { model.useAuthenticator() }.font(.subheadline.weight(.semibold)).foregroundStyle(Palette.acid) }
@@ -198,7 +198,7 @@ import SwiftUI
     }
     private var codeField: some View {
         VStack(alignment: .leading, spacing: 20) {
-            AuthField("Authentication or backup code", symbol: "key.horizontal") {
+            AuthField("Authentication or backup code", symbol: "key") {
                 TextField("Enter your code", text: $model.code).font(.title3.monospaced()).textContentType(.oneTimeCode)
                     .textInputAutocapitalization(.characters).autocorrectionDisabled().focused($focus, equals: .code)
                     .submitLabel(.go).onSubmit(submit).accessibilityLabel("Authentication code").accessibilityIdentifier("auth.code")

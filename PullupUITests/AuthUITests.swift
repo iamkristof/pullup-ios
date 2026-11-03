@@ -2,10 +2,10 @@ import XCTest
 
 @MainActor final class AuthUITests: XCTestCase {
     private var app: XCUIApplication!
-    override func setUpWithError() throws { continueAfterFailure = false }
+    override func setUpWithError() throws { continueAfterFailure = false; executionTimeAllowance = 120 }
     private func launch(_ scenario: String = "success") {
         app = XCUIApplication()
-        app.launchArguments = ["--auth-ui-testing"]
+        app.launchArguments = ["--auth-ui-testing", "--disable-decorative-animation"]
         app.launchEnvironment["AUTH_SCENARIO"] = scenario
         app.launch()
         XCTAssertTrue(app.staticTexts["auth.welcome"].waitForExistence(timeout: 10))

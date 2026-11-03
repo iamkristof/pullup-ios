@@ -40,6 +40,7 @@ enum AuthStep: String { case welcome, email, name, password, approval, code, suc
     private let service: any AuthenticationServing
 
     init(service: any AuthenticationServing) { self.service = service }
+    var canGoBack: Bool { !busy && !sessionPending }
     var isSignup: Bool { mode == .signUp }
     var normalizedEmail: String { email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
     var validEmail: Bool {

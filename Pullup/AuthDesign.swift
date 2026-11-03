@@ -120,6 +120,6 @@ struct AuthTicketArtwork: View {
                 .rotationEffect(.degrees(floating && !reduceMotion ? 8 : 4)).offset(y: floating && !reduceMotion ? -6 : 3)
                 .shadow(color: .black.opacity(0.3), radius: 25, y: 24)
         }.frame(height: 310).frame(maxWidth: .infinity).accessibilityHidden(true)
-            .onAppear { if !reduceMotion { withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) { floating = true } } }
+            .onAppear { if !reduceMotion && !AuthenticationFactory.quietUITests { withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) { floating = true } } }
     }
 }
