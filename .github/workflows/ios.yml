@@ -28,10 +28,8 @@ jobs:
           subprocess.run(['sudo', 'xcode-select', '--switch', str(selected/'Contents/Developer')], check=True)
           PYCODE
           xcodebuild -version
-      - name: Install project generator
-        run: brew install xcodegen
-      - name: Generate Xcode project
-        run: xcodegen generate
+      - name: Check included Xcode project
+        run: xcodebuild -list -project Pullup.xcodeproj
       - name: Select an available iPhone simulator
         run: |
           python3 - <<'PY'

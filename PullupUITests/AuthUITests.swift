@@ -14,7 +14,16 @@ import XCTest
     private func fill(_ id: String, _ value: String, secure: Bool = false) {
         let field = secure ? app.secureTextFields[id] : app.textFields[id]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
-        field.tap(); field.typeText(value)
+        if !field.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        field.tap()
+        // A second field can initially sit behind the email keyboard. Wait
+        // for its focus, and scroll/retry the tap rather than type into a
+        // non-focused snapshot.
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        if XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: focused, object: field)], timeout: 2) != .completed {
+            app.scrollViews.firstMatch.swipeUp(); field.tap()
+        }
+        field.typeText(value)
     }
     private func openPassword(_ scenario: String = "success") {
         launch(scenario); app.buttons["auth.signin"].tap()

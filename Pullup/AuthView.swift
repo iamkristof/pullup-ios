@@ -128,13 +128,13 @@ import SwiftUI
                     .focused($focus, equals: .email).submitLabel(model.isSignup ? .next : .continue)
                     .onSubmit { if model.isSignup { focus = .confirmation } else { submit() } }
                     .accessibilityLabel("Email address").accessibilityIdentifier("auth.email")
-            }
+            }.contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .email })
             if model.isSignup {
                 AuthField("Confirm email", symbol: "checkmark.shield") {
                     TextField("Enter it once more", text: $model.confirmationEmail).keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().focused($focus, equals: .confirmation)
                         .submitLabel(.continue).onSubmit(submit).accessibilityLabel("Confirm email").accessibilityIdentifier("auth.confirmEmail")
-                }
+                }.contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .confirmation })
                 Label("We’ll send your tickets here. A quick double-check makes all the difference.", systemImage: "info.circle")
                     .font(.caption).foregroundStyle(.white.opacity(0.5)).fixedSize(horizontal: false, vertical: true)
             }
