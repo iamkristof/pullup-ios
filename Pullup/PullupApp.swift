@@ -25,11 +25,15 @@ import SwiftUI
     @Environment(\.scenePhase) private var phase
     var body: some Scene {
         WindowGroup {
-            RootView().environmentObject(state).preferredColorScheme(.dark).tint(Palette.acid)
-                .task { await state.restore() }
-                .onChange(of: phase) { _, value in if value == .active { Task { await state.restore() } } }
+            appContent.environmentObject(state).preferredColorScheme(.dark).tint(Palette.acid)
+                .task { if !AuthenticationFactory.isUITesting { await state.restore() } }
+                .onChange(of: phase) { _, value in if value == .active && !AuthenticationFactory.isUITesting { Task { await state.restore() } } }
                 .overlay { if phase != .active { Palette.background.ignoresSafeArea().overlay(Text("PULLUP").font(.largeTitle.weight(.black))) } }
         }
+    }
+    @ViewBuilder private var appContent: some View {
+        if AuthenticationFactory.isUITesting { AuthView() }
+        else { RootView() }
     }
 }
 struct RootView: View {
@@ -73,7 +77,7 @@ struct AccountView: View {
                 Text("PULLUP  /  MADE FOR THE NIGHT").font(.caption2.monospaced()).foregroundStyle(.secondary)
             }.padding(24)
         }.background(Palette.background).navigationTitle("You")
-            .sheet(isPresented: $auth) { AuthView() }
+            .fullScreenCover(isPresented: $auth) { AuthView() }
             .sheet(item: $web) { WebSheet(destination: $0) }
     }
     private func row(_ title: String, symbol: String, path: String) -> some View {
@@ -83,3 +87,4 @@ struct AccountView: View {
         }
     }
 }
+

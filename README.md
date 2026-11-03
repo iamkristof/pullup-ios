@@ -2,13 +2,13 @@
 
 Native SwiftUI attendee app for iOS 17+. Guest discovery, email sign-in and sign-up, location-approval and authenticator challenges, a personal ticket wallet, rotating door QR, and native Apple Wallet presentation. Dark surfaces, acid-green accents, adaptive layouts, Dynamic Type and spring button interactions. No third-party app SDKs or embedded service keys.
 
-## Open in Xcode
+## Test on your MacBook
 
-1. Install Xcode on your Mac and open it once. Install an iOS simulator when prompted.
-2. Clone this repository. Install [XcodeGen](https://github.com/yonaskolb/XcodeGen) with `brew install xcodegen`.
-3. In this folder run `xcodegen generate`, then open `Pullup.xcodeproj`.
-4. Select the Pullup scheme and an iPhone simulator. Press Run.
-5. For your iPhone, select team `9Z686XN9U2` in Signing & Capabilities. Register bundle ID `at.pullup.ios` if needed. Enable automatic signing, select the device and Run.
+Open the included **Pullup.xcodeproj**, select **Pullup Auth Preview** and an **iPhone simulator**, then press **⌘R**. The preview lets you try the new glass sign-in/signup screens without creating a real account. Select **Pullup** instead to use the live app.
+
+See [TESTING.md](TESTING.md) for first-time Xcode setup, preview scenarios, real-account testing and device signing. No terminal commands or certificates are needed for simulator testing. Native Liquid Glass is used with Xcode 26+/iOS 26+; older supported versions use frosted materials.
+
+The authentication flow is native SwiftUI: welcome → email → name (signup) → password → location approval/2FA when required → success. It supports Password AutoFill, password visibility, matching email confirmation, terms review, reduced motion/transparency, keyboard navigation and clear retry states. Existing Pullup security checks remain on the server. Account-read retries after signup do not submit a duplicate account creation request.
 
 No p12, Stripe, Supabase or Resend secrets belong in this repository. Wallet passes are signed by the existing website.
 
@@ -51,3 +51,4 @@ Create a new iOS app in App Store Connect using `at.pullup.ios`. In Xcode choose
 ## Current scope
 
 Native: discover, auth, account summary, ticket list/detail, QR, Apple Wallet. Web-backed: event checkout, ticket extras/bar passes, guest recovery and settings. Push notifications, universal links, offline ticket storage, native Google/Apple login and host tools are not implemented in this version. Passwordless/Google-only accounts can use the website sign-in flow from account settings once a dedicated native OAuth callback is added; do not embed provider secrets or bypass existing security checks.
+

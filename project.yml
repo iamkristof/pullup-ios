@@ -24,7 +24,7 @@ targets:
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         TARGETED_DEVICE_FAMILY: '1,2'
     scheme:
-      testTargets: [PullupTests]
+      testTargets: [PullupTests, PullupUITests]
   PullupTests:
     type: bundle.unit-test
     platform: iOS
@@ -34,3 +34,25 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+
+
+  PullupUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [PullupUITests]
+    dependencies:
+      - target: Pullup
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Pullup Auth Preview:
+    build:
+      targets:
+        Pullup: all
+    run:
+      config: Debug
+      commandLineArguments:
+        --auth-ui-testing: true
+      environmentVariables:
+        AUTH_SCENARIO: success

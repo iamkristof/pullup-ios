@@ -43,7 +43,7 @@ struct TicketsView: View {
                 Button("Find tickets bought as a guest") { web = WebDestination(path: "/my-tickets", title: "Find your tickets") }.font(.subheadline).padding(.vertical)
             }.padding(24)
         }.background(Palette.background).navigationTitle("Tickets").navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $auth) { AuthView() }
+            .fullScreenCover(isPresented: $auth) { AuthView() }
             .sheet(item: $web) { WebSheet(destination: $0) }
             .task(id: state.account?.id) { await load(reset: true) }
             .refreshable { await load(reset: true) }
@@ -175,3 +175,4 @@ struct WalletSheet: UIViewControllerRepresentable {
         func addPassesViewControllerDidFinish(_ controller: PKAddPassesViewController) { close() }
     }
 }
+
