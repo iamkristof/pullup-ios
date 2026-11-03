@@ -1,0 +1,81 @@
+name: iOS build and tests
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select newest installed Xcode
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib, plistlib, subprocess, re
+          apps = list(pathlib.Path('/Applications').glob('Xcode*.app'))
+          def version(app):
+              with open(app/'Contents/Info.plist', 'rb') as file:
+                  return tuple(int(n) for n in re.findall(r'\d+', plistlib.load(file)['CFBundleShortVersionString']))
+          selected = max(apps, key=version)
+          subprocess.run(['sudo', 'xcode-select', '--switch', str(selected/'Contents/Developer')], check=True)
+          PYCODE
+          xcodebuild -version
+      - name: Check included Xcode project
+        run: xcodebuild -list -project Pullup.xcodeproj
+      - name: Select an available iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, os
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '-j']))['devices']
+          phones = [d for runtime, rows in sorted(devices.items(), reverse=True) if 'iOS' in runtime for d in rows if d['name'].startswith('iPhone')]
+          if not phones: raise SystemExit('No available iPhone simulator')
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('SIMULATOR_ID=' + phones[0]['udid'] + '\n')
+          PY
+      - name: Build without signing credentials
+        run: xcodebuild build-for-testing -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath Build CODE_SIGNING_ALLOWED=NO
+      - name: Run unit and UI tests
+        run: xcodebuild test-without-building -project Pullup.xcodeproj -scheme Pullup -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -derivedDataPath Build -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO
+      - name: Export screenshots
+        if: always()
+        run: |
+          if [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool export attachments --path TestResults.xcresult --output-path AuthScreenshots || true
+          fi
+      - name: Print generated project for source review
+        if: always()
+        run: |
+          python3 - <<'PYCODE'
+          import json, pathlib
+          paths = ['Pullup.xcodeproj/project.pbxproj'] + [str(p) for p in pathlib.Path('Pullup.xcodeproj/xcshareddata/xcschemes').glob('*.xcscheme')]
+          for path in paths:
+              p = pathlib.Path(path)
+              if p.exists():
+                  print('PROJECT_SOURCE_JSON=' + json.dumps({'path': path, 'content': p.read_text()}))
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            TestResults.xcresult
+            AuthScreenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xcode-project
+          path: Pullup.xcodeproj
+
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auth-screenshots
+          path: AuthScreenshots

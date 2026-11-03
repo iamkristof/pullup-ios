@@ -1,0 +1,12 @@
+.DS_Store
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.env*
+*.p12
+*.mobileprovision
+
+
+Build/
+TestResults.xcresult/
+AuthScreenshots/
