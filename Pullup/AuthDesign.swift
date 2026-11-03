@@ -43,7 +43,7 @@ struct AuthActionButton: View {
     var body: some View {
 #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            Button(action: action) { label.padding(.vertical, 8) }
+            Button(action: action) { label }
                 .buttonStyle(.glassProminent).buttonBorderShape(.capsule).controlSize(.large)
                 .tint(Palette.acid).foregroundStyle(.black).disabled(!enabled || busy)
                 .accessibilityIdentifier("auth.primary")
@@ -61,7 +61,7 @@ struct AuthActionButton: View {
             if busy { ProgressView().tint(.black).accessibilityLabel("Working") }
             Text(title).font(.headline)
             if !busy { Image(systemName: "arrow.right").font(.subheadline.weight(.semibold)) }
-        }.frame(maxWidth: .infinity).frame(minHeight: 36)
+        }.frame(maxWidth: .infinity).frame(minHeight: 28)
     }
 }
 private struct AuthPrimaryStyle: ButtonStyle {

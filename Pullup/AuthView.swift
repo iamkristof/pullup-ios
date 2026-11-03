@@ -4,6 +4,7 @@ import SwiftUI
     @StateObject private var model: AuthenticationModel
     @EnvironmentObject private var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showPassword = false
     @State private var web: WebDestination?
@@ -15,10 +16,9 @@ import SwiftUI
     }
     var body: some View {
         NavigationStack {
-            ZStack {
-                AuthBackdrop()
-                VStack(spacing: 0) {
-                    header
+            VStack(spacing: 0) {
+                header
+                ScrollViewReader { proxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 28) {
                             if model.step == .welcome { welcome }
@@ -29,10 +29,17 @@ import SwiftUI
                             .id(model.step)
                             .transition(reduceMotion ? .opacity : .asymmetric(insertion: .opacity.combined(with: .offset(x: 18)), removal: .opacity))
                     }.scrollDismissesKeyboard(.interactively)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onChange(of: focus) { _, field in
+                            guard let field else { return }
+                            let target = field == .revealedPassword ? Field.password : field
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { proxy.scrollTo(target, anchor: .center) }
+                        }
                 }
+                footer
             }
+            .background { AuthBackdrop() }
             .toolbar(.hidden, for: .navigationBar)
-            .safeAreaInset(edge: .bottom, spacing: 0) { footer }
             .animation(reduceMotion ? nil : .spring(response: 0.48, dampingFraction: 0.86), value: model.step)
             .sensoryFeedback(.selection, trigger: model.step)
             .sensoryFeedback(.error, trigger: model.error)
@@ -53,6 +60,10 @@ import SwiftUI
             }
             .onChange(of: model.account?.id) { _, _ in
                 if let account = model.account { app.account = account; app.error = nil }
+            }
+            .onChange(of: phase) { _, value in if value != .active { showPassword = false } }
+            .overlay {
+                if phase == .background { AuthBackdrop().overlay(Text("pullup↗").font(.title.weight(.black))) }
             }
             .onDisappear { model.clearSecrets() }
         }.preferredColorScheme(.dark)
@@ -128,13 +139,13 @@ import SwiftUI
                     .focused($focus, equals: .email).submitLabel(model.isSignup ? .next : .continue)
                     .onSubmit { if model.isSignup { focus = .confirmation } else { submit() } }
                     .accessibilityLabel("Email address").accessibilityIdentifier("auth.email")
-            }.contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .email })
+            }.id(Field.email).contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .email })
             if model.isSignup {
                 AuthField("Confirm email", symbol: "checkmark.shield") {
                     TextField("Enter it once more", text: $model.confirmationEmail).keyboardType(.emailAddress)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().focused($focus, equals: .confirmation)
                         .submitLabel(.continue).onSubmit(submit).accessibilityLabel("Confirm email").accessibilityIdentifier("auth.confirmEmail")
-                }.contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .confirmation })
+                }.id(Field.confirmation).contentShape(Rectangle()).simultaneousGesture(TapGesture().onEnded { focus = .confirmation })
                 Label("We’ll send your tickets here. A quick double-check makes all the difference.", systemImage: "info.circle")
                     .font(.caption).foregroundStyle(.white.opacity(0.5)).fixedSize(horizontal: false, vertical: true)
             }
@@ -145,7 +156,7 @@ import SwiftUI
             TextField("First and last name", text: $model.name).textContentType(.name).textInputAutocapitalization(.words)
                 .focused($focus, equals: .name).submitLabel(.continue).onSubmit(submit)
                 .accessibilityLabel("Your name").accessibilityIdentifier("auth.name")
-        }
+        }.id(Field.name)
     }
     private var passwordFields: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -161,7 +172,7 @@ import SwiftUI
                     showPassword.toggle(); focus = showPassword ? .revealedPassword : .password
                 } label: { Image(systemName: showPassword ? "eye.slash" : "eye").frame(minWidth: 32, minHeight: 44) }
                     .foregroundStyle(.white.opacity(0.6)).accessibilityLabel(showPassword ? "Hide password" : "Show password")
-            }
+            }.id(Field.password)
             if model.isSignup {
                 Label("At least 8 characters", systemImage: model.password.count >= 8 ? "checkmark.circle.fill" : "circle")
                     .font(.caption).foregroundStyle(model.password.count >= 8 ? Palette.acid : .white.opacity(0.45))
@@ -202,7 +213,7 @@ import SwiftUI
                 TextField("Enter your code", text: $model.code).font(.title3.monospaced()).textContentType(.oneTimeCode)
                     .textInputAutocapitalization(.characters).autocorrectionDisabled().focused($focus, equals: .code)
                     .submitLabel(.go).onSubmit(submit).accessibilityLabel("Authentication code").accessibilityIdentifier("auth.code")
-            }
+            }.id(Field.code)
             Label("Use the code from your authenticator. A saved backup code works too.", systemImage: "checkmark.shield")
                 .font(.caption).foregroundStyle(.white.opacity(0.5))
         }
@@ -228,7 +239,7 @@ import SwiftUI
                 AuthActionButton(title: "Get started") { model.start(.signUp) }
                 Button("I already have an account") { model.start(.signIn) }.font(.subheadline.weight(.semibold)).foregroundStyle(.white)
                     .frame(minHeight: 32).accessibilityIdentifier("auth.signin")
-                Button("Just looking? Explore as a guest") { dismiss() }.font(.caption).foregroundStyle(.white.opacity(0.5)).frame(minHeight: 28)
+                Button("Continue as a guest") { dismiss() }.font(.caption).foregroundStyle(.white.opacity(0.5)).frame(minHeight: 28)
             } else {
                 AuthActionButton(title: model.primaryTitle, busy: model.busy, enabled: model.canContinue) {
                     if model.step == .success { dismiss() } else { submit() }

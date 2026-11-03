@@ -76,7 +76,7 @@ enum AuthStep: String { case welcome, email, name, password, approval, code, suc
         case .password: return isSignup ? "Create my account" : "Sign in"
         case .approval: return "I’ve approved this login"
         case .code: return "Verify & continue"
-        case .success: return "Let’s find your night"
+        case .success: return "Continue to Pullup"
         }
     }
     func start(_ mode: AuthMode) {
